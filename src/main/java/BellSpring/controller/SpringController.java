@@ -101,9 +101,13 @@ public class SpringController {
     }
 
     @DeleteMapping("/session/delete")
-    public ResponseEntity<?> deleteSession(@RequestParam String session_id) {
+    public ResponseEntity<?> deleteSession(@RequestHeader("Session-ID") String sessionId) {
 
-        boolean deleted = sessionService.deleteSession(session_id);
+        // Проверяем валидность сессии
+        if (!sessionService.isValidSession(sessionId)) {
+            return ResponseEntity.status(401).body("Unauthorized: Invalid session");
+        }
+        boolean deleted = sessionService.deleteSession(sessionId);
 
         if (deleted) {
             return ResponseEntity.ok("Session deleted successfully");
