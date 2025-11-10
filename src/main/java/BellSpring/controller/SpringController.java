@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import BellSpring.service.DelayService;
 
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +21,7 @@ public class SpringController {
     private final KafkaProducer kafkaProducer;
     private final SessionService sessionService;
     private final OrderService orderService;
+    private final DelayService delayService;
 
     @PostMapping("/post-message")
     public ResponseEntity<String> calculateSquare(@RequestBody Map<String, String> request,
@@ -35,6 +37,7 @@ public class SpringController {
 
     @GetMapping("/session/create")
     public ResponseEntity<Map<String, String>> createSession() {
+        delayService.applyDelay("session.delete");
         // Создаем новую сессию
         String sessionId = UUID.randomUUID().toString();
         sessionService.createSession(sessionId);
@@ -45,6 +48,7 @@ public class SpringController {
 
     @GetMapping("/order/getProducts")
     public ResponseEntity<?> getProducts(@RequestHeader("Session-ID") String sessionId) {
+        delayService.applyDelay("order.getProducts");
         // Проверяем валидность сессии
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
@@ -57,6 +61,7 @@ public class SpringController {
     @PostMapping("/order/create")
     public ResponseEntity<?> createOrder(@RequestHeader("Session-ID") String sessionId,
                                              @RequestBody Map<String, Object> request) {
+        delayService.applyDelay("order.create");
         // Проверяем валидность сессии
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
@@ -77,6 +82,8 @@ public class SpringController {
     public ResponseEntity<?> getOrder(@RequestParam Long order_id,
                                       @RequestParam String product_name,
                                       @RequestHeader("Session-ID") String sessionId) {
+        delayService.applyDelay("order.getOrder");
+
         try {
             // Проверяем валидность сессии
             if (!sessionService.isValidSession(sessionId)) {
@@ -102,7 +109,7 @@ public class SpringController {
 
     @DeleteMapping("/session/delete")
     public ResponseEntity<?> deleteSession(@RequestHeader("Session-ID") String sessionId) {
-
+        delayService.applyDelay("session.delete");
         // Проверяем валидность сессии
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
@@ -118,7 +125,7 @@ public class SpringController {
 
     @GetMapping("/order/Check")
     public ResponseEntity<?> checkSession(@RequestParam String session_id) {
-
+        delayService.applyDelay("order.check");
         boolean isValid = sessionService.isValidSession(session_id);
 
         return ResponseEntity.ok(Map.of(

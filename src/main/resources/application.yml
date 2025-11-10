@@ -58,6 +58,18 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL для Hibernate
     show-sql: true
 
+response:
+  delay:
+    default: 0
+    session:
+      create: 500
+      delete: 500
+      check: 0
+    order:
+      create: 3000
+      getProducts: 1500
+      getOrder: 1500
+
 
 
 
