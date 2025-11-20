@@ -1,1 +1,11 @@
 .\mvnw clean package -X
+
+
+-Xms	Начальный размер heap
+-Xmx	Максимальный размер heap
+-Xss	Размер стека потока
+-XX:MetaspaceSize	Начальный размер Metaspace
+-XX:MaxMetaspaceSize	Максимальный размер Metaspace
+
+java -Xms1g -Xmx3g -jar Bell-0.0.1-SNAPSHOT.jar
+java -Xms1g -Xmx2g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -jar Bell-0.0.1-SNAPSHOT.jar
