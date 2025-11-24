@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/delay")
 @RequiredArgsConstructor
@@ -13,14 +15,15 @@ public class DelayController {
 
     private final DelayService delayService;
 
-    @GetMapping
-    public DelayConfig getDelays() {
-        return delayService.getConfig();
+    @GetMapping("/getDelays")  // Добавьте путь
+    public Map<String, Long> getDelays() {
+        return delayService.getConfig().getDelays();
     }
 
     @PostMapping
-    public ResponseEntity<String> updateDelays(@RequestBody DelayConfig newConfig) {
-        // В реальном приложении здесь была бы логика обновления конфигурации
-        return ResponseEntity.ok("Use application.yml to change delays permanently");
+    public ResponseEntity<String> updateDelays(@RequestBody Map<String, Long> newDelays) {
+        delayService.updateDelays(newDelays);
+        return ResponseEntity.ok("Delays updated successfully");
     }
+
 }

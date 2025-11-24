@@ -22,7 +22,7 @@ public class ProductService {
         products.put("Apple Watch", 41);
     }
 
-    public static Map<String, Integer> getAllProducts() {
+    public Map<String, Integer> getAllProducts() {
         return Collections.unmodifiableMap(products);
     }
     public Integer getProductPrice(String productName) {

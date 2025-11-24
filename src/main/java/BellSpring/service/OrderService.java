@@ -40,7 +40,7 @@ public class OrderService {
     /**
      * Получает заказ по ID с валидацией названия продукта
      */
-    public Order getOrderByIdWithProductValidation(Long orderId, String expectedProductName) {
+    public Order getOrderById(Long orderId, String expectedProductName) {
         Optional<Order> orderOpt = orderRepository.findById(orderId);
 
         if (orderOpt.isEmpty()) {

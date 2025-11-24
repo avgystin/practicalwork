@@ -22,6 +22,7 @@ public class SpringController {
     private final SessionService sessionService;
     private final OrderService orderService;
     private final DelayService delayService;
+    private final ProductService productService;
 
     @PostMapping("/post-message")
     public ResponseEntity<String> calculateSquare(@RequestBody Map<String, String> request,
@@ -37,35 +38,32 @@ public class SpringController {
 
     @GetMapping("/session/create")
     public ResponseEntity<Map<String, String>> createSession() {
-        delayService.applyDelay("session.delete");
+        delayService.applyDelay("session.create");
         // Создаем новую сессию
-        String sessionId = UUID.randomUUID().toString();
-        sessionService.createSession(sessionId);
-
-        // Возвращаем UUID сессии
-        return ResponseEntity.ok(Map.of("session_id", sessionId));
+        //String sessionId = sessionService.createSession();
+        return ResponseEntity.ok(Map.of("session_id", sessionService.createSession()));
     }
 
     @GetMapping("/order/getProducts")
     public ResponseEntity<?> getProducts(@RequestHeader("Session-ID") String sessionId) {
-        delayService.applyDelay("order.getProducts");
         // Проверяем валидность сессии
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
         }
+        delayService.applyDelay("order.getProducts");
         // Возвращаем список продуктов
-        Map<String, Integer> products = ProductService.getAllProducts();
+        Map<String, Integer> products = productService.getAllProducts();
         return ResponseEntity.ok(products);
     }
 
     @PostMapping("/order/create")
     public ResponseEntity<?> createOrder(@RequestHeader("Session-ID") String sessionId,
                                              @RequestBody Map<String, Object> request) {
-        delayService.applyDelay("order.create");
         // Проверяем валидность сессии
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
         }
+        delayService.applyDelay("order.create");
         String productName = (String) request.get("product_name");
         Integer quantity = Integer.valueOf(request.get("quantity").toString());
 
@@ -82,16 +80,16 @@ public class SpringController {
     public ResponseEntity<?> getOrder(@RequestParam Long order_id,
                                       @RequestParam String product_name,
                                       @RequestHeader("Session-ID") String sessionId) {
-        delayService.applyDelay("order.getOrder");
-
         try {
             // Проверяем валидность сессии
             if (!sessionService.isValidSession(sessionId)) {
                 return ResponseEntity.status(401).body("Unauthorized: Invalid session");
             }
+            delayService.applyDelay("order.getOrder");
 
-            // Получаем заказ с валидацией по названию продукта
-            Order order = orderService.getOrderByIdWithProductValidation(order_id, product_name);
+            // Получаем заказ по id с валидацией по названию продукта
+            Order order = orderService.getOrderById(order_id, product_name);
+
 
             return ResponseEntity.ok(Map.of(
                     "order_id", order.getId(),
@@ -109,11 +107,11 @@ public class SpringController {
 
     @DeleteMapping("/session/delete")
     public ResponseEntity<?> deleteSession(@RequestHeader("Session-ID") String sessionId) {
-        delayService.applyDelay("session.delete");
         // Проверяем валидность сессии
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
         }
+        delayService.applyDelay("session.delete");
         boolean deleted = sessionService.deleteSession(sessionId);
 
         if (deleted) {
@@ -125,7 +123,7 @@ public class SpringController {
 
     @GetMapping("/order/Check")
     public ResponseEntity<?> checkSession(@RequestParam String session_id) {
-        delayService.applyDelay("order.check");
+        delayService.applyDelay("session.check");
         boolean isValid = sessionService.isValidSession(session_id);
 
         return ResponseEntity.ok(Map.of(

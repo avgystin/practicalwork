@@ -3,6 +3,7 @@ package BellSpring.service;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -11,8 +12,10 @@ public class SessionService {
     private final Map<String, Long> activeSessions = new ConcurrentHashMap<>();
     private static final long SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 минут
 
-    public void createSession(String sessionId) {
+    public String createSession() {
+        String sessionId = UUID.randomUUID().toString();
         activeSessions.put(sessionId, System.currentTimeMillis());
+        return sessionId;
     }
 
     public boolean isValidSession(String sessionId) {
@@ -37,13 +40,7 @@ public class SessionService {
      * Удаляет сессию по UUID
      */
     public boolean deleteSession(String sessionId) {
-        if (sessionId == null) {
-            return false;
-        }
         return activeSessions.remove(sessionId) != null;
     }
 
-    public void invalidateSession(String sessionId) {
-        activeSessions.remove(sessionId);
-    }
 }

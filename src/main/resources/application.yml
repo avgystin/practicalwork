@@ -48,6 +48,12 @@ spring:
     username: postgres                          # Имя пользователя БД
     password: example                           # Пароль пользователя БД
     driver-class-name: org.postgresql.Driver    # Драйвер PostgreSQL
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      connection-timeout: 10000
+      idle-timeout: 300000         # Таймаут простаивающего соединения перед закрытием (5 минут)
+      max-lifetime: 1800000        # Максимальное время жизни соединения (30 минут)
 
   jpa:
     # Настройки JPA и Hibernate
@@ -56,19 +62,19 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL для Hibernate
-    show-sql: true
+        jdbc:
+          batch_size: 50           # Размер батча для bulk-операций (оптимизация вставок/обновлений)
+    show-sql: false                # Отключает логирование SQL в консоль (для производительности)
 
 response:
   delay:
-    default: 0
-    session:
-      create: 500
-      delete: 500
-      check: 0
-    order:
-      create: 3000
-      getProducts: 1500
-      getOrder: 1500
+    delays:
+      session.create: 500
+      session.delete: 500
+      session.check: 0
+      order.create: 3000
+      order.getProducts: 1500
+      order.getOrder: 1500
 
 
 
