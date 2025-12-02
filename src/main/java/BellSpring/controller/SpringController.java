@@ -25,17 +25,15 @@ public class SpringController {
     private final ProductService productService;
 
     @PostMapping("/post-message")
-    public Mono<ResponseEntity<String>> calculateSquare(@RequestBody Mono<Map<String, String>> requestMono) {
-        return requestMono.flatMap(request -> {
+    public Mono<ResponseEntity<String>> calculateSquare(@RequestBody Map<String, String> request) {
+        return Mono.fromCallable(() -> {
             String msg_id = request.get("msg_id");
             long unixtimestampMs = System.currentTimeMillis();
             String unixtimestamp = String.valueOf(unixtimestampMs / 1000);
             String method = "POST";
             String path = "/post-message";
 
-            return Mono.fromCallable(() ->
-                    kafkaProducer.sendToKafka(msg_id, unixtimestamp, method, path)
-            );
+            return kafkaProducer.sendToKafka(msg_id, unixtimestamp, method, path);
         });
     }
 
@@ -64,26 +62,24 @@ public class SpringController {
 
     @PostMapping("/order/create")
     public Mono<ResponseEntity<?>> createOrder(@RequestHeader("Session-ID") String sessionId,
-                                               @RequestBody Mono<Map<String, Object>> requestMono) {
-        return requestMono.flatMap(request ->
-                Mono.fromCallable(() -> {
-                    // Проверяем валидность сессии
-                    if (!sessionService.isValidSession(sessionId)) {
-                        return ResponseEntity.status(401).body("Unauthorized: Invalid session");
-                    }
-                    delayService.applyDelay("order.create");
-                    String productName = (String) request.get("product_name");
-                    Integer quantity = Integer.valueOf(request.get("quantity").toString());
+                                               @RequestBody Map<String, Object> request) {
+        return Mono.fromCallable(() -> {
+            // Проверяем валидность сессии
+            if (!sessionService.isValidSession(sessionId)) {
+                return ResponseEntity.status(401).body("Unauthorized: Invalid session");
+            }
+            delayService.applyDelay("order.create");
+            String productName = (String) request.get("product_name");
+            Integer quantity = Integer.valueOf(request.get("quantity").toString());
 
-                    // Создаем заказ
-                    Order order = orderService.createOrder(sessionId, productName, quantity);
+            // Создаем заказ
+            Order order = orderService.createOrder(sessionId, productName, quantity);
 
-                    // Возвращаем ID заказа
-                    return ResponseEntity.ok(Map.of(
-                            "order_id", order.getId()
-                    ));
-                })
-        );
+            // Возвращаем ID заказа
+            return ResponseEntity.ok(Map.of(
+                    "order_id", order.getId()
+            ));
+        });
     }
 
     @GetMapping("/order/getOrder")
