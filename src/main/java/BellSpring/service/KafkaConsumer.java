@@ -32,6 +32,6 @@ public class KafkaConsumer {
 
         Long id = Long.parseLong(message);
         orderRepository.deleteById(id);
-        log.info("Delete message: {}", message);
+        //log.info("Delete message: {}", message);
     }
 }

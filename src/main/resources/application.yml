@@ -13,14 +13,7 @@ management:
 
 server:
   port: 12222
-  tomcat:
-    threads:
-      max: 5000
-      min-spare: 20
-    accept-count: 100
-    max-connections: 20000
-    mbeanregistry:
-      enabled: true
+
 
 spring:
   application:
