@@ -3,9 +3,10 @@ package BellSpring.service;
 import BellSpring.model.DelayConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
-import java.util.concurrent.TimeUnit;
-
+import java.time.Duration;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -13,22 +14,19 @@ public class DelayService {
 
     private final DelayConfig delayConfig;
 
-    public void applyDelay(String endpoint) {
+    public Mono<Void> applyDelay(String endpoint) {
         Long delay = delayConfig.getDelays().get(endpoint);
         if (delay != null && delay > 0) {
-            try {
-                TimeUnit.MILLISECONDS.sleep(delay);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            return Mono.delay(Duration.ofMillis(delay)).then();
         }
+        return Mono.empty();
     }
 
     public DelayConfig getConfig() {
         return delayConfig;
     }
 
-    public void updateDelays(java.util.Map<String, Long> newDelays) {
+    public void updateDelays(Map<String, Long> newDelays) {
         delayConfig.updateDelays(newDelays);
     }
 }

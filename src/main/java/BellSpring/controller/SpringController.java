@@ -39,112 +39,103 @@ public class SpringController {
 
     @GetMapping("/session/create")
     public Mono<ResponseEntity<Map<String, String>>> createSession() {
-        return Mono.fromCallable(() -> {
-            delayService.applyDelay("session.create");
-            String sessionId = sessionService.createSession();
-            return ResponseEntity.ok(Map.of("session_id", sessionId));
-        });
+        return delayService.applyDelay("session.create")
+                .then(sessionService.createSession())
+                .map(sessionId -> ResponseEntity.ok(Map.of("session_id", sessionId)));
     }
 
     @GetMapping("/order/getProducts")
     public Mono<ResponseEntity<?>> getProducts(@RequestHeader("Session-ID") String sessionId) {
-        return Mono.fromCallable(() -> {
-            // Проверяем валидность сессии
-            if (!sessionService.isValidSession(sessionId)) {
-                return ResponseEntity.status(401).body("Unauthorized: Invalid session");
-            }
-            delayService.applyDelay("order.getProducts");
-            // Возвращаем список продуктов
-            Map<String, Integer> products = productService.getAllProducts();
-            return ResponseEntity.ok(products);
-        });
+        return sessionService.isValidSession(sessionId)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
+                    }
+                    return delayService.applyDelay("order.getProducts")
+                            .then(Mono.fromCallable(() -> {
+                                Map<String, Integer> products = productService.getAllProducts();
+                                return ResponseEntity.ok(products);
+                            }));
+                });
     }
 
     @PostMapping("/order/create")
     public Mono<ResponseEntity<?>> createOrder(@RequestHeader("Session-ID") String sessionId,
                                                @RequestBody Map<String, Object> request) {
-        return Mono.fromCallable(() -> {
-            // Проверяем валидность сессии
-            if (!sessionService.isValidSession(sessionId)) {
-                return ResponseEntity.status(401).body("Unauthorized: Invalid session");
-            }
-            delayService.applyDelay("order.create");
-            String productName = (String) request.get("product_name");
-            Integer quantity = Integer.valueOf(request.get("quantity").toString());
+        return sessionService.isValidSession(sessionId)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
+                    }
+                    return delayService.applyDelay("order.create")
+                            .then(Mono.fromCallable(() -> {
+                                String productName = (String) request.get("product_name");
+                                Integer quantity = Integer.valueOf(request.get("quantity").toString());
 
-            // Создаем заказ
-            Order order = orderService.createOrder(sessionId, productName, quantity);
-
-            // Возвращаем ID заказа
-            return ResponseEntity.ok(Map.of(
-                    "order_id", order.getId()
-            ));
-        });
+                                Order order = orderService.createOrder(sessionId, productName, quantity);
+                                return ResponseEntity.ok(Map.of("order_id", order.getId()));
+                            }));
+                });
     }
 
     @GetMapping("/order/getOrder")
     public Mono<ResponseEntity<?>> getOrder(@RequestParam Long order_id,
                                             @RequestParam String product_name,
                                             @RequestHeader("Session-ID") String sessionId) {
-        return Mono.fromCallable(() -> {
-            try {
-                // Проверяем валидность сессии
-                if (!sessionService.isValidSession(sessionId)) {
-                    return ResponseEntity.status(401).body("Unauthorized: Invalid session");
-                }
-                delayService.applyDelay("order.getOrder");
-
-                // Получаем заказ по id с валидацией по названию продукта
-                Order order = orderService.getOrderById(order_id, product_name);
-
-                return ResponseEntity.ok(Map.of(
-                        "order_id", order.getId(),
-                        "product_name", order.getProductName(),
-                        "quantity", order.getQuantity(),
-                        "total_price", order.getTotalPrice()
-                ));
-            } catch (IllegalArgumentException e) {
-                // Перехватываем исключение и возвращаем сообщение об ошибке
-                return ResponseEntity.badRequest().body(e.getMessage());
-            } catch (Exception e) {
-                return ResponseEntity.internalServerError().body("Error retrieving order");
-            }
-        });
+        return sessionService.isValidSession(sessionId)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
+                    }
+                    return delayService.applyDelay("order.getOrder")
+                            .then(Mono.fromCallable(() -> {
+                                try {
+                                    Order order = orderService.getOrderById(order_id, product_name);
+                                    return ResponseEntity.ok(Map.of(
+                                            "order_id", order.getId(),
+                                            "product_name", order.getProductName(),
+                                            "quantity", order.getQuantity(),
+                                            "total_price", order.getTotalPrice()
+                                    ));
+                                } catch (IllegalArgumentException e) {
+                                    return ResponseEntity.badRequest().body(e.getMessage());
+                                } catch (Exception e) {
+                                    return ResponseEntity.internalServerError().body("Error retrieving order");
+                                }
+                            }));
+                });
     }
 
     @DeleteMapping("/session/delete")
     public Mono<ResponseEntity<?>> deleteSession(@RequestHeader("Session-ID") String sessionId) {
-        return Mono.fromCallable(() -> {
-            // Проверяем валидность сессии
-            if (!sessionService.isValidSession(sessionId)) {
-                return ResponseEntity.status(401).body("Unauthorized: Invalid session");
-            }
-            delayService.applyDelay("session.delete");
-            boolean deleted = sessionService.deleteSession(sessionId);
-
-            if (deleted) {
-                return ResponseEntity.ok("Session deleted successfully");
-            } else {
-                return ResponseEntity.status(404).body("Session not found");
-            }
-        });
+        return sessionService.isValidSession(sessionId)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
+                    }
+                    return delayService.applyDelay("session.delete")
+                            .then(sessionService.deleteSession(sessionId))
+                            .map(deleted -> {
+                                if (deleted) {
+                                    return ResponseEntity.ok("Session deleted successfully");
+                                } else {
+                                    return ResponseEntity.status(404).body("Session not found");
+                                }
+                            });
+                });
     }
 
     @GetMapping("/order/Check")
     public Mono<ResponseEntity<?>> checkSession(@RequestParam String session_id) {
-        return Mono.fromCallable(() -> {
-            delayService.applyDelay("session.check");
-            boolean isValid = sessionService.isValidSession(session_id);
-
-            return ResponseEntity.ok(Map.of(
-                    "session_id", session_id,
-                    "is_valid", isValid,
-                    "message", isValid ? "Session is active" : "Session is invalid or deleted"
-            ));
-        });
+        return delayService.applyDelay("session.check")
+                .then(sessionService.isValidSession(session_id))
+                .map(isValid -> ResponseEntity.ok(Map.of(
+                        "session_id", session_id,
+                        "is_valid", isValid,
+                        "message", isValid ? "Session is active" : "Session is invalid or deleted"
+                )));
     }
 }
-
 
 
 
