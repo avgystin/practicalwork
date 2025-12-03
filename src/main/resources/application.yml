@@ -1,18 +1,16 @@
 management:
-  endpoint:
-    health:
-      enabled: true  # Включение health-check
-    metrics:
-      enabled: true  # Включение метрик
-    prometheus:
-      enabled: true  # Включение Prometheus endpoint
   endpoints:
     web:
       exposure:
-        include: metrics,health,prometheus  # Какие эндпоинты экспонировать
+        include: metrics,health,prometheus
+  metrics:
+    tags:
+      application: Bell  # добавляет тег ко всем метрикам
 
 server:
   port: 12222  # Порт приложения
+  shutdown: graceful
+  connection-timeout: 2m
 
 spring:
   application:
@@ -33,6 +31,8 @@ spring:
       auto-offset-reset: earliest  # Чтение с начала топика
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  webflux:
+    max-in-memory-size: 10MB
 
   datasource:
     url: jdbc:postgresql://localhost:5432/mydb  # URL PostgreSQL
@@ -40,8 +40,8 @@ spring:
     password: example
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 30  # Максимальный размер пула соединений
-      minimum-idle: 10  # Минимальное количество idle соединений
+      maximum-pool-size: 15  # Максимальный размер пула соединений
+      minimum-idle: 5  # Минимальное количество idle соединений
       connection-timeout: 10000  # Таймаут соединения (10 сек)
       idle-timeout: 300000  # Таймаут idle соединения (5 мин)
       max-lifetime: 1800000  # Максимальное время жизни соединения (30 мин)
@@ -51,10 +51,13 @@ spring:
       ddl-auto: create-drop  # Автоматическое создание/удаление таблиц
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL
         jdbc:
           batch_size: 50  # Размер батча для bulk операций
+          fetch_size: 100
+        query:
+          in_clause_parameter_padding: true
     show-sql: false  # Отключение логирования SQL
+    open-in-view: false
 
 # Конфигурация задержек для эндпоинтов
 response:
@@ -67,7 +70,15 @@ response:
       order.getProducts: 1500  # 1.5 сек задержка для получения продуктов
       order.getOrder: 1500  # 1.5 сек задержка для получения заказа
 
+logging:
+  level:
+    root: INFO
+    BellSpring: INFO
 
 
-
+#  ERROR (самый важный) ⬇
+#  WARN  ⬇
+#  INFO  ⬇
+#  DEBUG ⬇
+#  TRACE (самый подробный)
 

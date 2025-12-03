@@ -18,13 +18,10 @@ public class SessionService {
 
     /**
      * Создание новой сессии
-     * @return Mono<String> - реактивный результат с ID сессии
      */
     public Mono<String> createSession() {
         return Mono.fromSupplier(() -> {
-            // Генерируем уникальный ID сессии
             String sessionId = UUID.randomUUID().toString();
-            // Сохраняем с текущим временем
             activeSessions.put(sessionId, System.currentTimeMillis());
             return sessionId;
         });
@@ -32,12 +29,10 @@ public class SessionService {
 
     /**
      * Проверка валидности сессии
-     * @param sessionId ID сессии для проверки
-     * @return Mono<Boolean> - true если сессия валидна
      */
     public Mono<Boolean> isValidSession(String sessionId) {
         return Mono.fromSupplier(() -> {
-            if (sessionId == null || !activeSessions.containsKey(sessionId)) {
+            if (sessionId == null) {
                 return false;
             }
 
@@ -46,9 +41,8 @@ public class SessionService {
                 return false;
             }
 
-            // Проверяем не истекла ли сессия (30 минут)
+            // Проверяем не истекла ли сессия
             if (System.currentTimeMillis() - creationTime > SESSION_TIMEOUT_MS) {
-                // Удаляем просроченную сессию
                 activeSessions.remove(sessionId);
                 return false;
             }
@@ -59,8 +53,6 @@ public class SessionService {
 
     /**
      * Удаление сессии
-     * @param sessionId ID сессии для удаления
-     * @return Mono<Boolean> - true если сессия была удалена
      */
     public Mono<Boolean> deleteSession(String sessionId) {
         return Mono.fromSupplier(() ->
