@@ -4,8 +4,8 @@ import BellSpring.model.Order;
 import BellSpring.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Optional;
 
@@ -16,13 +16,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductService productService;
 
-    /**
-     * Создает заказ для указанного товара
-     */
-    @Transactional
     public Mono<Order> createOrder(String sessionId, String productName, Integer quantity) {
         return productService.getProductPrice(productName)
-                .flatMap(unitPrice -> {
+                .flatMap(unitPrice -> Mono.fromCallable(() -> {
                     // Рассчитываем общую стоимость
                     Integer totalPrice = unitPrice * quantity;
 
@@ -34,15 +30,12 @@ public class OrderService {
                     order.setUnitPrice(unitPrice);
                     order.setTotalPrice(totalPrice);
 
-                    return Mono.just(orderRepository.save(order));
-                });
+                    return orderRepository.save(order);
+                }).subscribeOn(Schedulers.boundedElastic()));
     }
 
-    /**
-     * Получает заказ по ID с валидацией названия продукта
-     */
     public Mono<Order> getOrderById(Long orderId, String expectedProductName) {
-        return Mono.fromSupplier(() -> {
+        return Mono.fromCallable(() -> {
             Optional<Order> orderOpt = orderRepository.findById(orderId);
 
             if (orderOpt.isEmpty()) {
@@ -59,6 +52,6 @@ public class OrderService {
                 );
             }
             return order;
-        });
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 }
