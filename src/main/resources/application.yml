@@ -1,73 +1,71 @@
 management:
   endpoint:
     health:
-      enabled: true
+      enabled: true  # Включение health-check
     metrics:
-      enabled: true
+      enabled: true  # Включение метрик
     prometheus:
-      enabled: true
+      enabled: true  # Включение Prometheus endpoint
   endpoints:
     web:
       exposure:
-        include: metrics,health,prometheus
+        include: metrics,health,prometheus  # Какие эндпоинты экспонировать
 
 server:
-  port: 12222
-
+  port: 12222  # Порт приложения
 
 spring:
   application:
-    name: Bell
+    name: Bell  # Имя приложения
   jmx:
-    enabled: true
+    enabled: true  # Включение JMX
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9092  # Адрес Kafka
     producer:
-      acks: all
-      retries: 3
+      acks: all  # Гарантия доставки сообщений
+      retries: 3  # Количество повторных попыток
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer  # JSON сериализатор
       properties:
-        enable.idempotence: true
+        enable.idempotence: true  # Идемпотентность продюсера
     consumer:
-      group-id: my-group               # ID группы потребителей
-      auto-offset-reset: earliest      # Чтение сообщений с начала топика
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer    # Десериализатор ключей
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer  # Десериализатор значений
+      group-id: my-group  # ID группы потребителей
+      auto-offset-reset: earliest  # Чтение с начала топика
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
   datasource:
-    # Настройки подключения к PostgreSQL
-    url: jdbc:postgresql://localhost:5432/mydb  # URL базы данных
-    username: postgres                          # Имя пользователя БД
-    password: example                           # Пароль пользователя БД
-    driver-class-name: org.postgresql.Driver    # Драйвер PostgreSQL
+    url: jdbc:postgresql://localhost:5432/mydb  # URL PostgreSQL
+    username: postgres
+    password: example
+    driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 30
-      minimum-idle: 10
-      connection-timeout: 10000
-      idle-timeout: 300000         # Таймаут простаивающего соединения перед закрытием (5 минут)
-      max-lifetime: 1800000        # Максимальное время жизни соединения (30 минут)
+      maximum-pool-size: 30  # Максимальный размер пула соединений
+      minimum-idle: 10  # Минимальное количество idle соединений
+      connection-timeout: 10000  # Таймаут соединения (10 сек)
+      idle-timeout: 300000  # Таймаут idle соединения (5 мин)
+      max-lifetime: 1800000  # Максимальное время жизни соединения (30 мин)
 
   jpa:
-    # Настройки JPA и Hibernate
     hibernate:
-      ddl-auto: create-drop  # Автоматическое создание/удаление таблиц при запуске/остановке
+      ddl-auto: create-drop  # Автоматическое создание/удаление таблиц
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL для Hibernate
+        dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL
         jdbc:
-          batch_size: 50           # Размер батча для bulk-операций (оптимизация вставок/обновлений)
-    show-sql: false                # Отключает логирование SQL в консоль (для производительности)
+          batch_size: 50  # Размер батча для bulk операций
+    show-sql: false  # Отключение логирования SQL
 
+# Конфигурация задержек для эндпоинтов
 response:
   delay:
     delays:
-      session.create: 500
-      session.delete: 500
-      session.check: 0
-      order.create: 3000
-      order.getProducts: 1500
-      order.getOrder: 1500
+      session.create: 500  # 500 мс задержка для создания сессии
+      session.delete: 500  # 500 мс задержка для удаления сессии
+      session.check: 0  # Без задержки для проверки сессии
+      order.create: 3000  # 3 сек задержка для создания заказа
+      order.getProducts: 1500  # 1.5 сек задержка для получения продуктов
+      order.getOrder: 1500  # 1.5 сек задержка для получения заказа
 
 
 
