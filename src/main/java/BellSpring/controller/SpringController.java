@@ -52,10 +52,11 @@ public class SpringController {
                         return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
                     }
                     return delayService.applyDelay("order.getProducts")
-                            .then(Mono.fromCallable(() -> {
-                                Map<String, Integer> products = productService.getAllProducts();
-                                return ResponseEntity.ok(products);
-                            }));
+                            .then(productService.getAllProducts()  // <-- ИЗМЕНИЛ: getAllProducts() вместо getAllProductsReactive()
+                                    .<ResponseEntity<?>>map(products -> ResponseEntity.ok(products))
+                                    .onErrorResume(e -> Mono.just(
+                                            ResponseEntity.status(500).body("Error retrieving products")
+                                    )));
                 });
     }
 
@@ -68,12 +69,14 @@ public class SpringController {
                         return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
                     }
                     return delayService.applyDelay("order.create")
-                            .then(Mono.fromCallable(() -> {
+                            .then(Mono.defer(() -> {
                                 String productName = (String) request.get("product_name");
                                 Integer quantity = Integer.valueOf(request.get("quantity").toString());
 
-                                Order order = orderService.createOrder(sessionId, productName, quantity);
-                                return ResponseEntity.ok(Map.of("order_id", order.getId()));
+                                return orderService.createOrder(sessionId, productName, quantity)  // <-- ИЗМЕНИЛ: createOrder() вместо createOrderReactive()
+                                        .<ResponseEntity<?>>map(order -> ResponseEntity.ok(Map.of("order_id", order.getId())))
+                                        .onErrorResume(IllegalArgumentException.class,
+                                                e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())));
                             }));
                 });
     }
@@ -88,21 +91,18 @@ public class SpringController {
                         return Mono.just(ResponseEntity.status(401).body("Unauthorized: Invalid session"));
                     }
                     return delayService.applyDelay("order.getOrder")
-                            .then(Mono.fromCallable(() -> {
-                                try {
-                                    Order order = orderService.getOrderById(order_id, product_name);
-                                    return ResponseEntity.ok(Map.of(
+                            .then(orderService.getOrderById(order_id, product_name)  // <-- ИЗМЕНИЛ: getOrderById() вместо getOrderByIdReactive()
+                                    .<ResponseEntity<?>>map(order -> ResponseEntity.ok(Map.of(
                                             "order_id", order.getId(),
                                             "product_name", order.getProductName(),
                                             "quantity", order.getQuantity(),
                                             "total_price", order.getTotalPrice()
-                                    ));
-                                } catch (IllegalArgumentException e) {
-                                    return ResponseEntity.badRequest().body(e.getMessage());
-                                } catch (Exception e) {
-                                    return ResponseEntity.internalServerError().body("Error retrieving order");
-                                }
-                            }));
+                                    )))
+                                    .onErrorResume(IllegalArgumentException.class,
+                                            e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())))
+                                    .onErrorResume(Exception.class,
+                                            e -> Mono.just(ResponseEntity.internalServerError().body("Error retrieving order")))
+                            );
                 });
     }
 

@@ -1,9 +1,9 @@
 package BellSpring.service;
 
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -22,10 +22,18 @@ public class ProductService {
         products.put("Apple Watch", 41);
     }
 
-    public Map<String, Integer> getAllProducts() {
-        return Collections.unmodifiableMap(products);
+    // Реактивные методы
+    public Mono<Map<String, Integer>> getAllProducts() {
+        return Mono.just(Collections.unmodifiableMap(products));
     }
-    public Integer getProductPrice(String productName) {
-        return products.get(productName);
+
+    public Mono<Integer> getProductPrice(String productName) {
+        return Mono.fromSupplier(() -> {
+            Integer price = products.get(productName);
+            if (price == null) {
+                throw new IllegalArgumentException("Product not found: " + productName);
+            }
+            return price;
+        });
     }
 }
