@@ -1,43 +1,41 @@
 package BellSpring.model;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "orders")
+@Table("orders")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_uuid", unique = true, nullable = false)
+    @Column("order_uuid")
     private String orderUuid;
 
-    @Column(name = "session_id", nullable = false)
+    @Column("session_id")
     private String sessionId;
 
-    @Column(name = "product_name", nullable = false)
+    @Column("product_name")
     private String productName;
 
-    @Column(name = "quantity", nullable = false)
+    @Column("quantity")
     private Integer quantity;
 
-    @Column(name = "unit_price", nullable = false)
+    @Column("unit_price")
     private Integer unitPrice;
 
-    @Column(name = "total_price", nullable = false)
+    @Column("total_price")
     private Integer totalPrice;
 
-    @Column(name = "created_at", nullable = false)
+    @Column("created_at")
     private LocalDateTime createdAt;
-
 }

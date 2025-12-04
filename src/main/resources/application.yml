@@ -33,18 +33,25 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   webflux:
     max-in-memory-size: 10MB
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/mydb  # URL PostgreSQL
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/mydb
     username: postgres
     password: example
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 50  # Максимальный размер пула соединений
-      minimum-idle: 10  # Минимальное количество idle соединений
-      connection-timeout: 5000  # Таймаут соединения (10 сек)
-      idle-timeout: 300000  # Таймаут idle соединения (5 мин)
-      max-lifetime: 1800000  # Максимальное время жизни соединения (30 мин)
+    pool:
+      enabled: true
+      max-size: 20
+
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/mydb  # URL PostgreSQL
+#    username: postgres
+#    password: example
+#    driver-class-name: org.postgresql.Driver
+#    hikari:
+#      maximum-pool-size: 50  # Максимальный размер пула соединений
+#      minimum-idle: 10  # Минимальное количество idle соединений
+#      connection-timeout: 5000  # Таймаут соединения (10 сек)
+#      idle-timeout: 300000  # Таймаут idle соединения (5 мин)
+#      max-lifetime: 1800000  # Максимальное время жизни соединения (30 мин)
 
   jpa:
     hibernate:

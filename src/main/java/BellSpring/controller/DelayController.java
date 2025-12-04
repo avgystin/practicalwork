@@ -17,17 +17,13 @@ public class DelayController {
 
     @GetMapping("/getDelays")
     public Mono<Map<String, Long>> getDelays() {
-        return Mono.fromCallable(() ->
-                delayService.getConfig().getDelays()
-        );
+        return Mono.just(delayService.getConfig().getDelays());
     }
 
     @PostMapping
     public Mono<ResponseEntity<String>> updateDelays(@RequestBody Map<String, Long> newDelays) {
-        return Mono.fromCallable(() -> {
-            delayService.updateDelays(newDelays);
-            return ResponseEntity.ok("Delays updated successfully");
-        });
+        return Mono.fromRunnable(() -> delayService.updateDelays(newDelays))
+                .thenReturn(ResponseEntity.ok("Delays updated successfully"));
     }
 
 }

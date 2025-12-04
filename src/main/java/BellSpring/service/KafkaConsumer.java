@@ -22,20 +22,18 @@ public class KafkaConsumer {
     public void listen(String message) {
         log.debug("Received message: {}", message);
 
-        // Реактивное сохранение с использованием bounded elastic scheduler
-        Mono.fromCallable(() -> {
-                    MessageEntity entity = new MessageEntity();
-                    entity.setContent(message);
-                    return messageRepository.save(entity);
-                })
-                .subscribeOn(Schedulers.boundedElastic()) // Выполняем в отдельном пуле потоков
-                .doOnSuccess(entity ->
-                        log.debug("Message saved to database with id: {}", entity.getId())
+        MessageEntity entity = new MessageEntity();
+        entity.setContent(message);
+
+        // Исправить: убрать .getId() из реактивной цепочки
+        messageRepository.save(entity)
+                .doOnSuccess(savedEntity ->
+                        log.debug("Message saved to database with id: {}", savedEntity.getId())
                 )
                 .doOnError(error ->
                         log.error("Failed to save message: {}", error.getMessage())
                 )
-                .subscribe(); // Запускаем подписку
+                .subscribe();
     }
 
     @KafkaListener(topics = "practicalwork", groupId = "del-messege")
@@ -45,13 +43,9 @@ public class KafkaConsumer {
         try {
             Long id = Long.parseLong(message);
 
-            Mono.fromCallable(() -> {
-                        orderRepository.deleteById(id);
-                        return id;
-                    })
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .doOnSuccess(deletedId ->
-                            log.debug("Order deleted with id: {}", deletedId)
+            orderRepository.deleteById(id)
+                    .doOnSuccess(v ->
+                            log.debug("Order deleted with id: {}", id)
                     )
                     .doOnError(error ->
                             log.error("Failed to delete order with id {}: {}", id, error.getMessage())

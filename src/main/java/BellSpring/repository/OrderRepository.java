@@ -1,18 +1,14 @@
 package BellSpring.repository;
 
 import BellSpring.model.Order;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
-
-    Optional<Order> findByOrderUuid(String orderUuid);
-
-    List<Order> findBySessionId(String sessionId);
-
-    List<Order> findByProductName(String productName);
+public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
+    Mono<Order> findByOrderUuid(String orderUuid);
+    Flux<Order> findBySessionId(String sessionId);
+    Flux<Order> findByProductName(String productName);
 }

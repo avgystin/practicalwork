@@ -5,7 +5,6 @@ import BellSpring.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -31,13 +30,11 @@ public class OrderService {
                     order.setQuantity(quantity);
                     order.setUnitPrice(unitPrice);
                     order.setTotalPrice(totalPrice);
-
-                    // ЯВНО устанавливаем UUID перед сохранением
                     order.setOrderUuid(UUID.randomUUID().toString());
                     order.setCreatedAt(LocalDateTime.now());
 
-                    return Mono.fromCallable(() -> orderRepository.save(order))
-                            .subscribeOn(Schedulers.boundedElastic());
+                    // R2DBC: save возвращает Mono<Order>
+                    return orderRepository.save(order);
                 });
     }
 
@@ -45,24 +42,16 @@ public class OrderService {
      * Получение заказа по ID с валидацией названия продукта
      */
     public Mono<Order> getOrderById(Long orderId, String expectedProductName) {
-        return Mono.fromCallable(() -> {
-                    var orderOpt = orderRepository.findById(orderId);
-
-                    if (orderOpt.isEmpty()) {
-                        throw new IllegalArgumentException("Order not found with id: " + orderId);
-                    }
-
-                    Order order = orderOpt.get();
-
-                    // Валидация названия продукта
+        return orderRepository.findById(orderId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Order not found with id: " + orderId)))
+                .flatMap(order -> {
                     if (!order.getProductName().equals(expectedProductName)) {
-                        throw new IllegalArgumentException(
+                        return Mono.error(new IllegalArgumentException(
                                 "Product name validation failed. Expected: " + expectedProductName +
                                         ", but got: " + order.getProductName()
-                        );
+                        ));
                     }
-                    return order;
-                })
-                .subscribeOn(Schedulers.boundedElastic());
+                    return Mono.just(order);
+                });
     }
 }
