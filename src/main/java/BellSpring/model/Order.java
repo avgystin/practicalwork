@@ -40,13 +40,4 @@ public class Order {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        if (orderUuid == null) {
-            orderUuid = UUID.randomUUID().toString();
-        }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
 }

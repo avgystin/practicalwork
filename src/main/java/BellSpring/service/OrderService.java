@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -29,7 +32,10 @@ public class OrderService {
                     order.setUnitPrice(unitPrice);
                     order.setTotalPrice(totalPrice);
 
-                    // Изолируем блокирующую операцию - ЭТОГО ДОСТАТОЧНО!
+                    // ЯВНО устанавливаем UUID перед сохранением
+                    order.setOrderUuid(UUID.randomUUID().toString());
+                    order.setCreatedAt(LocalDateTime.now());
+
                     return Mono.fromCallable(() -> orderRepository.save(order))
                             .subscribeOn(Schedulers.boundedElastic());
                 });

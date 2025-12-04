@@ -20,8 +20,8 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092  # Адрес Kafka
     producer:
-      acks: all  # Гарантия доставки сообщений
-      retries: 3  # Количество повторных попыток
+#      acks: all  # Гарантия доставки сообщений
+#      retries: 3  # Количество повторных попыток
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer  # JSON сериализатор
       properties:
@@ -40,9 +40,9 @@ spring:
     password: example
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 15  # Максимальный размер пула соединений
-      minimum-idle: 5  # Минимальное количество idle соединений
-      connection-timeout: 10000  # Таймаут соединения (10 сек)
+      maximum-pool-size: 50  # Максимальный размер пула соединений
+      minimum-idle: 10  # Минимальное количество idle соединений
+      connection-timeout: 5000  # Таймаут соединения (10 сек)
       idle-timeout: 300000  # Таймаут idle соединения (5 мин)
       max-lifetime: 1800000  # Максимальное время жизни соединения (30 мин)
 
