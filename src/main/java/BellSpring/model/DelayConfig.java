@@ -17,6 +17,7 @@ public class DelayConfig {
     public void updateDelays(Map<String, Long> newDelays) {
         this.delays.putAll(newDelays);
     }
+
     public Map<String, Long> getDelays() {
         return delays;
     }

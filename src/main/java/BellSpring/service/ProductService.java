@@ -7,22 +7,13 @@ import java.util.*;
 
 @Service
 public class ProductService {
-
-    // Статическое хранилище продуктов (в реальном приложении было бы в БД)
-    private static final Map<String, Integer> products = new LinkedHashMap<>();
-
-    public ProductService() {
-        initializeProducts();
-    }
-
-    // Инициализация списка продуктов при запуске приложения
-    private void initializeProducts() {
-        products.put("MacBook", 1);
-        products.put("iPhone", 89);
-        products.put("Samsung Galaxy", 45);
-        products.put("Sony WH", 24);
-        products.put("Apple Watch", 41);
-    }
+    private static final Map<String, Integer> PRODUCTS = Map.of(
+            "MacBook", 1,
+            "iPhone", 89,
+            "Samsung Galaxy", 45,
+            "Sony WH", 24,
+            "Apple Watch", 41
+    );
 
     /**
      * Реактивный метод получения всех продуктов
@@ -30,7 +21,7 @@ public class ProductService {
      */
     public Mono<Map<String, Integer>> getAllProducts() {
         // Mono.just создает реактивный поток с одним элементом
-        return Mono.just(Collections.unmodifiableMap(products));
+        return Mono.just(PRODUCTS);
     }
 
     /**
@@ -39,7 +30,7 @@ public class ProductService {
      */
     public Mono<Integer> getProductPrice(String productName) {
         return Mono.fromSupplier(() -> {
-            Integer price = products.get(productName);
+            Integer price = PRODUCTS.get(productName);
             if (price == null) {
                 throw new IllegalArgumentException("Product not found: " + productName);
             }

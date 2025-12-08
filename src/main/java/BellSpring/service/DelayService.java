@@ -28,14 +28,12 @@ public class DelayService {
         }
         return Mono.empty(); // Если задержка 0 или не задана
     }
-
     /**
      * Получение текущей конфигурации задержек
      */
     public DelayConfig getConfig() {
         return delayConfig;
     }
-
     /**
      * Обновление задержек
      * @param newDelays новые значения задержек

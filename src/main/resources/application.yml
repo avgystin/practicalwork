@@ -19,7 +19,7 @@ spring:
   main:
     web-application-type: reactive
   jmx:
-    enabled: true  # Включение JMX
+#    enabled: true  # Включение JMX
   kafka:
 #    listener:
 #      concurrency: 3  # потоков на партицию
@@ -32,11 +32,11 @@ spring:
       properties:
         enable.idempotence: true  # Идемпотентность продюсера
     consumer:
-      max-poll-interval-ms: 300000
-      max-poll-records: 50
-      fetch-max-wait-ms: 500
+#      max-poll-interval-ms: 300000
+#      max-poll-records: 50
+#      fetch-max-wait-ms: 500
       enable-auto-commit: false # ручное подтверждение
-      group-id: del-message-reactive  # ID группы потребителей
+      group-id: del-message # ID группы потребителей
       auto-offset-reset: earliest  # Чтение с начала топика
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -47,15 +47,15 @@ spring:
     username: postgres
     password: example
     pool:
-      max-idle-time: 10m  # ← ДОБАВИТЬ
-      validation-query: "SELECT 1"  # ← ДОБАВИТЬ
-      initial-size: 0
-      enabled: true
+      max-idle-time: 10m
+      validation-query: "SELECT 1"
+#      initial-size: 0
+#      enabled: true
       max-size: 100
   task:
     execution:
       bounded-elastic:
-        max-threads: 20
+#        max-threads: 20
 
 #  datasource:
 #    url: jdbc:postgresql://localhost:5432/mydb  # URL PostgreSQL

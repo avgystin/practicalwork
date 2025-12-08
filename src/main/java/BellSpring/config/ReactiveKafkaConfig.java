@@ -17,11 +17,12 @@ public class ReactiveKafkaConfig {
 
     @Bean
     public ReceiverOptions<String, String> receiverOptions(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${spring.kafka.consumer.group-id}") String groupId) {
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "del-message-reactive");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);
@@ -36,8 +37,8 @@ public class ReactiveKafkaConfig {
     }
 
     @Bean
-    public ReactiveKafkaConsumerTemplate<String, String> kafkaConsumerTemplate( // ← переименуй
-                                                                                ReceiverOptions<String, String> receiverOptions) {
+    public ReactiveKafkaConsumerTemplate<String, String> kafkaConsumerTemplate(
+            ReceiverOptions<String, String> receiverOptions) {
         return new ReactiveKafkaConsumerTemplate<>(receiverOptions);
     }
 }

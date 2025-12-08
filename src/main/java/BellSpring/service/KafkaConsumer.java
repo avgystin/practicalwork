@@ -15,7 +15,6 @@ import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 @RequiredArgsConstructor
 @Slf4j
 public class KafkaConsumer implements DisposableBean {
-
     private final OrderRepository orderRepository;
     private final ReactiveKafkaConsumerTemplate<String, String> kafkaConsumerTemplate;
     private Disposable subscription;
@@ -24,9 +23,12 @@ public class KafkaConsumer implements DisposableBean {
     public void startConsuming() {
         subscription = kafkaConsumerTemplate
                 .receive()
-                .concatMap(this::processRecord)
-                .doOnError(e -> log.error("Ошибка в потоке консьюмера", e))
-                .retry()
+                .flatMap(this::processRecord, 10)  // ← Параллельная обработка
+                .onErrorResume(e -> {  // ← Восстанавливаем поток при ошибках
+                    log.error("Ошибка в потоке консьюмера", e);
+                    return Mono.empty();
+                })
+                .retryWhen(reactor.util.retry.Retry.backoff(3, java.time.Duration.ofSeconds(5))) // ← Ограниченный retry
                 .subscribe();
     }
 
@@ -40,14 +42,31 @@ public class KafkaConsumer implements DisposableBean {
 
     private Mono<Void> processRecord(ReceiverRecord<String, String> record) {
         return Mono.just(record.value())
-                .map(Long::parseLong)
-                .flatMap(orderRepository::deleteById)
-                .doOnSuccess(v -> {
-                    log.trace("Удален заказ: {}", record.value());
-                    record.receiverOffset().acknowledge();
+                .flatMap(orderIdStr -> {
+                    try {
+                        Long orderId = Long.parseLong(orderIdStr);
+                        // Идемпотентная обработка
+                        return orderRepository.findById(orderId)
+                                .flatMap(order -> orderRepository.delete(order)
+                                        .doOnSuccess(v -> {
+                                            log.trace("Удален заказ: {}", orderId);
+                                            record.receiverOffset().acknowledge();
+                                        }))
+                                .switchIfEmpty(Mono.fromRunnable(() -> {
+                                    // Заказ уже удален - подтверждаем
+                                    log.trace("Заказ уже удален: {}", orderId);
+                                    record.receiverOffset().acknowledge();
+                                }));
+                    } catch (NumberFormatException e) {
+                        log.error("Неверный формат ID заказа: {}", orderIdStr);
+                        record.receiverOffset().acknowledge();  // Подтверждаем битое сообщение
+                        return Mono.empty();
+                    }
                 })
-                .doOnError(e -> {
-                    log.error("Ошибка удаления заказа {}: {}", record.value(), e.getMessage());
+                .onErrorResume(e -> {
+                    log.error("Ошибка удаления заказа: {}", e.getMessage());
+                    // НЕ подтверждаем при ошибке БД - будет повтор
+                    return Mono.empty();
                 })
                 .then();
     }
