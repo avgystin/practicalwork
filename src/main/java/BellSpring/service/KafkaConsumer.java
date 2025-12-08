@@ -1,59 +1,54 @@
 package BellSpring.service;
 
-import BellSpring.model.MessageEntity;
-import BellSpring.repository.MessageRepository;
 import BellSpring.repository.OrderRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.kafka.receiver.ReceiverRecord;
+import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class KafkaConsumer {
+public class KafkaConsumer implements DisposableBean {
 
-    private final MessageRepository messageRepository;
     private final OrderRepository orderRepository;
+    private final ReactiveKafkaConsumerTemplate<String, String> kafkaConsumerTemplate;
+    private Disposable subscription;
 
-    @KafkaListener(topics = "postedmessages", groupId = "my-group")
-    public void listen(String message) {
-        log.debug("Received message: {}", message);
-
-        MessageEntity entity = new MessageEntity();
-        entity.setContent(message);
-
-        // Исправить: убрать .getId() из реактивной цепочки
-        messageRepository.save(entity)
-                .doOnSuccess(savedEntity ->
-                        log.debug("Message saved to database with id: {}", savedEntity.getId())
-                )
-                .doOnError(error ->
-                        log.error("Failed to save message: {}", error.getMessage())
-                )
+    @PostConstruct
+    public void startConsuming() {
+        subscription = kafkaConsumerTemplate
+                .receive()
+                .concatMap(this::processRecord)
+                .doOnError(e -> log.error("Ошибка в потоке консьюмера", e))
+                .retry()
                 .subscribe();
     }
 
-    @KafkaListener(topics = "practicalwork", groupId = "del-messege")
-    public void delmessege(String message) {
-        log.debug("Delete order message received: {}", message);
-
-        try {
-            Long id = Long.parseLong(message);
-
-            orderRepository.deleteById(id)
-                    .doOnSuccess(v ->
-                            log.debug("Order deleted with id: {}", id)
-                    )
-                    .doOnError(error ->
-                            log.error("Failed to delete order with id {}: {}", id, error.getMessage())
-                    )
-                    .subscribe();
-
-        } catch (NumberFormatException e) {
-            log.error("Invalid message format for delete: {}", message);
+    @Override
+    public void destroy() {
+        if (subscription != null) {
+            subscription.dispose();
+            log.info("Kafka consumer остановлен");
         }
+    }
+
+    private Mono<Void> processRecord(ReceiverRecord<String, String> record) {
+        return Mono.just(record.value())
+                .map(Long::parseLong)
+                .flatMap(orderRepository::deleteById)
+                .doOnSuccess(v -> {
+                    log.trace("Удален заказ: {}", record.value());
+                    record.receiverOffset().acknowledge();
+                })
+                .doOnError(e -> {
+                    log.error("Ошибка удаления заказа {}: {}", record.value(), e.getMessage());
+                })
+                .then();
     }
 }

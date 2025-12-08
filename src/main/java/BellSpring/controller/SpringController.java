@@ -1,6 +1,6 @@
 package BellSpring.controller;
 
-import BellSpring.service.KafkaProducer;
+//import BellSpring.service.KafkaProducer;
 import BellSpring.service.OrderService;
 import BellSpring.service.ProductService;
 import BellSpring.service.SessionService;
@@ -16,33 +16,33 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SpringController {
 
-    private final KafkaProducer kafkaProducer;
+//    private final KafkaProducer kafkaProducer;
     private final SessionService sessionService;
     private final OrderService orderService;
     private final DelayService delayService;
     private final ProductService productService;
 
-    @PostMapping("/post-message")
-    public Mono<ResponseEntity<String>> calculateSquare(@RequestBody Map<String, String> request) {
-        String msg_id = request.get("msg_id");
-        long unixtimestampMs = System.currentTimeMillis();
-        String unixtimestamp = String.valueOf(unixtimestampMs / 1000);
-        String method = "POST";
-        String path = "/post-message";
-
-        // Вызываем напрямую реактивный метод
-        return kafkaProducer.sendToKafka(msg_id, unixtimestamp, method, path)
-                .map(result -> {
-                    if (result.startsWith("OK")) {
-                        return ResponseEntity.ok(result);
-                    } else {
-                        return ResponseEntity.status(500).body(result);
-                    }
-                })
-                .onErrorResume(e -> Mono.just(
-                        ResponseEntity.status(500).body("Internal server error: " + e.getMessage())
-                ));
-    }
+//    @PostMapping("/post-message")
+//    public Mono<ResponseEntity<String>> calculateSquare(@RequestBody Map<String, String> request) {
+//        String msg_id = request.get("msg_id");
+//        long unixtimestampMs = System.currentTimeMillis();
+//        String unixtimestamp = String.valueOf(unixtimestampMs / 1000);
+//        String method = "POST";
+//        String path = "/post-message";
+//
+//        // Вызываем напрямую реактивный метод
+//        return kafkaProducer.sendToKafka(msg_id, unixtimestamp, method, path)
+//                .map(result -> {
+//                    if (result.startsWith("OK")) {
+//                        return ResponseEntity.ok(result);
+//                    } else {
+//                        return ResponseEntity.status(500).body(result);
+//                    }
+//                })
+//                .onErrorResume(e -> Mono.just(
+//                        ResponseEntity.status(500).body("Internal server error: " + e.getMessage())
+//                ));
+//    }
 
     @GetMapping("/session/create")
     public Mono<ResponseEntity<Map<String, String>>> createSession() {

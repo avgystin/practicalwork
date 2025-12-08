@@ -2,22 +2,27 @@ management:
   endpoints:
     web:
       exposure:
-        include: metrics,health,prometheus
+        include: metrics,health,prometheus,env,loggers
   metrics:
     tags:
       application: Bell  # добавляет тег ко всем метрикам
 
 server:
-  port: 12222  # Порт приложения
+  port: 11222  # Порт приложения
+  connection-timeout: 2s
   shutdown: graceful
-  connection-timeout: 2m
+#  connection-timeout: 2m
 
 spring:
   application:
     name: Bell  # Имя приложения
+  main:
+    web-application-type: reactive
   jmx:
     enabled: true  # Включение JMX
   kafka:
+#    listener:
+#      concurrency: 3  # потоков на партицию
     bootstrap-servers: localhost:9092  # Адрес Kafka
     producer:
 #      acks: all  # Гарантия доставки сообщений
@@ -27,19 +32,30 @@ spring:
       properties:
         enable.idempotence: true  # Идемпотентность продюсера
     consumer:
-      group-id: my-group  # ID группы потребителей
+      max-poll-interval-ms: 300000
+      max-poll-records: 50
+      fetch-max-wait-ms: 500
+      enable-auto-commit: false # ручное подтверждение
+      group-id: del-message-reactive  # ID группы потребителей
       auto-offset-reset: earliest  # Чтение с начала топика
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   webflux:
-    max-in-memory-size: 10MB
+    max-in-memory-size: 2MB
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/mydb
     username: postgres
     password: example
     pool:
+      max-idle-time: 10m  # ← ДОБАВИТЬ
+      validation-query: "SELECT 1"  # ← ДОБАВИТЬ
+      initial-size: 0
       enabled: true
-      max-size: 20
+      max-size: 100
+  task:
+    execution:
+      bounded-elastic:
+        max-threads: 20
 
 #  datasource:
 #    url: jdbc:postgresql://localhost:5432/mydb  # URL PostgreSQL
@@ -53,18 +69,18 @@ spring:
 #      idle-timeout: 300000  # Таймаут idle соединения (5 мин)
 #      max-lifetime: 1800000  # Максимальное время жизни соединения (30 мин)
 
-  jpa:
-    hibernate:
-      ddl-auto: create-drop  # Автоматическое создание/удаление таблиц
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 50  # Размер батча для bulk операций
-          fetch_size: 100
-        query:
-          in_clause_parameter_padding: true
-    show-sql: false  # Отключение логирования SQL
-    open-in-view: false
+#  jpa:
+#    hibernate:
+#      ddl-auto: create-drop  # Автоматическое создание/удаление таблиц
+#    properties:
+#      hibernate:
+#        jdbc:
+#          batch_size: 50  # Размер батча для bulk операций
+#          fetch_size: 100
+#        query:
+#          in_clause_parameter_padding: true
+#    show-sql: false  # Отключение логирования SQL
+#    open-in-view: false
 
 # Конфигурация задержек для эндпоинтов
 response:
