@@ -10,21 +10,53 @@ management:
     web:
       exposure:
         include: metrics,health,prometheus
+  metrics:
+    tags:
+      application: virtBoot
+      environment: ${ENVIRONMENT:development}
+
+#*********************************
+    distribution:
+      # Гистограммы для HTTP запросов
+      percentiles-histogram:
+        http.server.requests: true
+        kafka.consumer.fetch.manager.records.consumed: true
+        spring.kafka.listener: true
+      # SLO (Service Level Objectives)
+      slo:
+        http.server.requests: 10ms, 50ms, 100ms, 200ms, 500ms, 1s, 2s
+      # Перцентили
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+        spring.kafka.listener: 0.5, 0.95, 0.99
+    # Какие метрики включать
+    enable:
+      jvm: true
+      tomcat: true
+      kafka: true
+      jdbc: true
+      logback: true
+      process: true
+      system: true
+#*********************************
 
 server:
   port: 12222
   tomcat:
-    threads:
-      max: 5000
-      min-spare: 20
-    accept-count: 100
-    max-connections: 20000
+#    threads:
+#      max: 5000
+#      min-spare: 20
+#    accept-count: 100
+#    max-connections: 20000
     mbeanregistry:
       enabled: true
 
 spring:
   application:
     name: Bell
+  threads:
+    virtual:
+      enabled: true
   jmx:
     enabled: true
   kafka:
@@ -57,6 +89,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL для Hibernate
     show-sql: true
+    open-in-view: false
 
 response:
   delay:

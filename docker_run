@@ -1,0 +1,1 @@
+docker run -d --name virt-spring-app --network spring-kafka-network -p 12222:12222 -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgrescompose-db-1:5432/mydb -e SPRING_DATASOURCE_USERNAME=postgres -e SPRING_DATASOURCE_PASSWORD=example -e SPRING_KAFKA_BOOTSTRAP_SERVERS=kafkazookcompose-kafka-1:9092 virt-spring-21
