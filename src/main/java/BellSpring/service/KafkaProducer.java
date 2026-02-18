@@ -1,5 +1,7 @@
 package BellSpring.service;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -13,10 +15,10 @@ import java.util.Map;
 public class KafkaProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
+    private final ObservationRegistry observationRegistry;
 
     public ResponseEntity<String> sendToKafka(String msg_id, String unixtimestamp,
-                                 String method, String path) {
+                                              String method, String path) {
 
         Map<String, String> hashMap = new HashMap<>();
         hashMap.put("msg_id", msg_id);
@@ -24,11 +26,15 @@ public class KafkaProducer {
         hashMap.put("method", method);
         hashMap.put("uri", path);
 
-        try {
-            kafkaTemplate.send("postedmessages", hashMap);
-            return ResponseEntity.ok("OK");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error");
-        }
+        return Observation.createNotStarted("kafka.send", observationRegistry)
+                .lowCardinalityKeyValue("topic", "postedmessages")
+                .observe(() -> {
+                    try {
+                        kafkaTemplate.send("postedmessages", hashMap);
+                        return ResponseEntity.ok("OK");
+                    } catch (Exception e) {
+                        return ResponseEntity.status(500).body("Error");
+                    }
+                });
     }
 }
