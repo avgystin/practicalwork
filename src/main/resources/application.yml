@@ -10,10 +10,6 @@ management:
     web:
       exposure:
         include: metrics,health,prometheus
-  metrics:
-    tags:
-      application: virtBoot
-      environment: ${ENVIRONMENT:development}
 
   tracing:
     sampling:
@@ -22,7 +18,10 @@ management:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans  # адрес Zipkin сервера
 
-#*********************************
+  metrics:
+    tags:
+      application: virtBoot
+      environment: ${ENVIRONMENT:development}
     distribution:
       # Гистограммы для HTTP запросов
       percentiles-histogram:
@@ -45,7 +44,7 @@ management:
       logback: true
       process: true
       system: true
-#*********************************
+
 
 server:
   port: 12222
