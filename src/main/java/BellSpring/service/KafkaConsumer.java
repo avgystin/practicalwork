@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("unused")  //  Вызываются фреймворком Spring при получении сообщений из Kafka
 public class KafkaConsumer {
 
     private final MessageRepository messageRepository;
