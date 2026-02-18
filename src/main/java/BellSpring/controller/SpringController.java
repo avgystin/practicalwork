@@ -37,7 +37,7 @@ public class SpringController {
 
     @GetMapping("/session/create")
     public ResponseEntity<Map<String, String>> createSession() {
-        delayService.applyDelay("session.delete");
+        delayService.applyDelay("session.create");
         // Создаем новую сессию
         String sessionId = UUID.randomUUID().toString();
         sessionService.createSession(sessionId);
