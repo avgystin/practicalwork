@@ -15,6 +15,13 @@ management:
       application: virtBoot
       environment: ${ENVIRONMENT:development}
 
+  tracing:
+    sampling:
+      probability: 1.0  # 100% запросов трассируем (в проде можно 0.1 = 10%)
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans  # адрес Zipkin сервера
+
 #*********************************
     distribution:
       # Гистограммы для HTTP запросов
@@ -103,7 +110,18 @@ response:
       getProducts: 1500
       getOrder: 1500
 
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
 
+decorator:
+  datasource:
+    datasource-proxy:
+      query:
+        enable-logging: true
+      slow-query:
+        enable-logging: true
+        threshold: 100
 
 
 
