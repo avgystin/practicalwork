@@ -1,6 +1,7 @@
 package BellSpring.service;
 
 import BellSpring.metrics.UserMetrics;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -24,7 +25,9 @@ public class SessionService {
 
     public boolean isValidSession(String sessionId) {
         if (sessionId == null || !activeSessions.containsKey(sessionId)) {
-            return false;}
+            return false;
+        }
+
         Long creationTime = activeSessions.get(sessionId);
         if (creationTime == null) {
             return false;
@@ -36,7 +39,6 @@ public class SessionService {
             userMetrics.userDisconnected();
             return false;
         }
-
         return true;
     }
 
@@ -48,10 +50,22 @@ public class SessionService {
         return removed;
     }
 
-    public void invalidateSession(String sessionId) {
-        boolean removed = activeSessions.remove(sessionId) != null;
-        if (removed) {
-            userMetrics.userDisconnected();
-        }
+    /**
+     * Периодическая очистка истекших сессий.
+     * Запускается каждую минуту.
+     */
+    @Scheduled(fixedDelay = 60000)
+    @SuppressWarnings("unused") // Метод вызывается Spring-ом автоматически
+    public void cleanupExpiredSessions() {
+        int beforeSize = activeSessions.size();
+        long now = System.currentTimeMillis();
+
+        activeSessions.entrySet().removeIf(entry -> {
+            boolean expired = now - entry.getValue() > SESSION_TIMEOUT_MS;
+            if (expired) {
+                userMetrics.userDisconnected();
+            }
+            return expired;
+        });
     }
 }
