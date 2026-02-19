@@ -15,32 +15,35 @@ public class DelayService {
     private final DelayConfig delayConfig;
     private final ObservationRegistry observationRegistry;
 
-    public void applyDelay(String endpoint) {
-        long delay = getDelay(endpoint);
-        if (delay > 0) {
-            // Создаем вложенный спан для операции задержки
+    public void applyDelay(String endpoint, long elapsedMs) {
+        long targetDelay = getDelay(endpoint);
+
+        if (targetDelay > 0) {
+            long actualDelay = Math.max(0, targetDelay - elapsedMs);
+
+            if (actualDelay == 0) {
+                return;
+            }
+
+            // Создаем спан с тегами endpoint и delay.ms
             Observation observation = Observation.createNotStarted("delay." + endpoint, observationRegistry)
                     .lowCardinalityKeyValue("endpoint", endpoint)
-                    .lowCardinalityKeyValue("delay.ms", String.valueOf(delay));
+                    .lowCardinalityKeyValue("delay.ms", String.valueOf(actualDelay));  // ДОБАВЛЕНО
 
-            // Начинаем наблюдение
             observation.start();
 
             try {
-                // Аннотация начала задержки
+                // События с важной информацией
+                observation.event(Observation.Event.of("target.ms: " + targetDelay));
+                observation.event(Observation.Event.of("elapsed.ms: " + elapsedMs));
                 observation.event(Observation.Event.of("delay.started"));
 
-                TimeUnit.MILLISECONDS.sleep(delay);
+                TimeUnit.MILLISECONDS.sleep(actualDelay);
 
-                // Аннотация конца задержки
                 observation.event(Observation.Event.of("delay.finished"));
-
-                // Завершаем успешно
                 observation.stop();
-
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                // Аннотация ошибки
                 observation.event(Observation.Event.of("delay.error"));
                 observation.error(e);
                 observation.stop();

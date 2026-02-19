@@ -37,62 +37,59 @@ public class SpringController {
 
     @GetMapping("/session/create")
     public ResponseEntity<Map<String, String>> createSession() {
-        delayService.applyDelay("session.create");
-        // Создаем новую сессию
+        long start = System.currentTimeMillis();  // +1 строка
         String sessionId = UUID.randomUUID().toString();
         sessionService.createSession(sessionId);
 
-        // Возвращаем UUID сессии
+        delayService.applyDelay("session.create",
+                System.currentTimeMillis() - start);  // ИЗМЕНЕНО
         return ResponseEntity.ok(Map.of("session_id", sessionId));
     }
 
     @GetMapping("/order/getProducts")
     public ResponseEntity<?> getProducts(@RequestHeader("Session-ID") String sessionId) {
-        delayService.applyDelay("order.getProducts");
-        // Проверяем валидность сессии
+        long start = System.currentTimeMillis();  // +1 строка
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
         }
-        // Возвращаем список продуктов
         Map<String, Integer> products = ProductService.getAllProducts();
+
+        delayService.applyDelay("order.getProducts",
+                System.currentTimeMillis() - start);  // ИЗМЕНЕНО
         return ResponseEntity.ok(products);
     }
 
     @PostMapping("/order/create")
     public ResponseEntity<?> createOrder(@RequestHeader("Session-ID") String sessionId,
-                                             @RequestBody Map<String, Object> request) {
-        delayService.applyDelay("order.create");
-        // Проверяем валидность сессии
+                                         @RequestBody Map<String, Object> request) {
+        long start = System.currentTimeMillis();  // +1 строка
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
         }
         String productName = (String) request.get("product_name");
         Integer quantity = Integer.valueOf(request.get("quantity").toString());
 
-        // Создаем заказ
         Order order = orderService.createOrder(sessionId, productName, quantity);
 
-        // Возвращаем ID заказа
-        return ResponseEntity.ok(Map.of(
-                "order_id", order.getId()
-        ));
+        delayService.applyDelay("order.create",
+                System.currentTimeMillis() - start);  // ИЗМЕНЕНО
+        return ResponseEntity.ok(Map.of("order_id", order.getId()));
     }
 
     @GetMapping("/order/getOrder")
     public ResponseEntity<?> getOrder(@RequestParam Long order_id,
                                       @RequestParam String product_name,
                                       @RequestHeader("Session-ID") String sessionId) {
-        delayService.applyDelay("order.getOrder");
-
+        long start = System.currentTimeMillis();  // +1 строка
         try {
-            // Проверяем валидность сессии
             if (!sessionService.isValidSession(sessionId)) {
                 return ResponseEntity.status(401).body("Unauthorized: Invalid session");
             }
 
-            // Получаем заказ с валидацией по названию продукта
             Order order = orderService.getOrderByIdWithProductValidation(order_id, product_name);
 
+            delayService.applyDelay("order.getOrder",
+                    System.currentTimeMillis() - start);  // ИЗМЕНЕНО
             return ResponseEntity.ok(Map.of(
                     "order_id", order.getId(),
                     "product_name", order.getProductName(),
@@ -100,21 +97,26 @@ public class SpringController {
                     "total_price", order.getTotalPrice()
             ));
         } catch (IllegalArgumentException e) {
-            // Перехватываем исключение и возвращаем сообщение об ошибке
+            delayService.applyDelay("order.getOrder.error",
+                    System.currentTimeMillis() - start);  // ИЗМЕНЕНО
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            delayService.applyDelay("order.getOrder.error",
+                    System.currentTimeMillis() - start);  // ИЗМЕНЕНО
             return ResponseEntity.internalServerError().body("Error retrieving order");
         }
     }
 
     @DeleteMapping("/session/delete")
     public ResponseEntity<?> deleteSession(@RequestHeader("Session-ID") String sessionId) {
-        delayService.applyDelay("session.delete");
-        // Проверяем валидность сессии
+        long start = System.currentTimeMillis();  // +1 строка
         if (!sessionService.isValidSession(sessionId)) {
             return ResponseEntity.status(401).body("Unauthorized: Invalid session");
         }
         boolean deleted = sessionService.deleteSession(sessionId);
+
+        delayService.applyDelay("session.delete",
+                System.currentTimeMillis() - start);  // ИЗМЕНЕНО
 
         if (deleted) {
             return ResponseEntity.ok("Session deleted successfully");
@@ -125,8 +127,11 @@ public class SpringController {
 
     @GetMapping("/order/Check")
     public ResponseEntity<?> checkSession(@RequestParam String session_id) {
-        delayService.applyDelay("order.check");
+        long start = System.currentTimeMillis();  // +1 строка
         boolean isValid = sessionService.isValidSession(session_id);
+
+        delayService.applyDelay("session.check",
+                System.currentTimeMillis() - start);  // ИЗМЕНЕНО
 
         return ResponseEntity.ok(Map.of(
                 "session_id", session_id,

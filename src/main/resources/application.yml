@@ -11,6 +11,10 @@ management:
       exposure:
         include: metrics,health,prometheus
 
+  observations:
+    annotations:
+      enabled: true
+
   tracing:
     sampling:
       probability: 1.0  # 100% запросов трассируем (в проде можно 0.1 = 10%)
@@ -94,7 +98,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect  # Диалект PostgreSQL для Hibernate
-    show-sql: true
+    show-sql: false
     open-in-view: false
 
 response:
@@ -112,6 +116,8 @@ response:
 logging:
   pattern:
     level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    BellSpring: WARN
 
 decorator:
   datasource:
