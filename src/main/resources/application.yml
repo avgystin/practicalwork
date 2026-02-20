@@ -1,11 +1,11 @@
 management:
-  endpoint:
-    health:
-      enabled: true
-    metrics:
-      enabled: true
-    prometheus:
-      enabled: true
+#  endpoint:
+#    health:
+#      enabled: true
+#    metrics:
+#      enabled: true
+#    prometheus:
+#      enabled: true
   endpoints:
     web:
       exposure:
@@ -16,6 +16,7 @@ management:
       enabled: true
 
   tracing:
+    enabled: false
     sampling:
       probability: 1.0  # 100% запросов трассируем (в проде можно 0.1 = 10%)
   zipkin:
@@ -25,29 +26,28 @@ management:
   metrics:
     tags:
       application: virtBoot
-      environment: ${ENVIRONMENT:development}
-    distribution:
-      # Гистограммы для HTTP запросов
-      percentiles-histogram:
-        http.server.requests: true
-        kafka.consumer.fetch.manager.records.consumed: true
-        spring.kafka.listener: true
-      # SLO (Service Level Objectives)
-      slo:
-        http.server.requests: 10ms, 50ms, 100ms, 200ms, 500ms, 1s, 2s
-      # Перцентили
-      percentiles:
-        http.server.requests: 0.5, 0.95, 0.99
-        spring.kafka.listener: 0.5, 0.95, 0.99
-    # Какие метрики включать
-    enable:
-      jvm: true
-      tomcat: true
-      kafka: true
-      jdbc: true
-      logback: true
-      process: true
-      system: true
+#    distribution:
+#      # Гистограммы для HTTP запросов
+#      percentiles-histogram:
+#        http.server.requests: true
+#        kafka.consumer.fetch.manager.records.consumed: true
+#        spring.kafka.listener: true
+#      # SLO (Service Level Objectives)
+#      slo:
+#        http.server.requests: 10ms, 50ms, 100ms, 200ms, 500ms, 1s, 2s
+#      # Перцентили
+#      percentiles:
+#        http.server.requests: 0.5, 0.95, 0.99
+#        spring.kafka.listener: 0.5, 0.95, 0.99
+    # Фильтр меирик
+#    enable:
+#      jvm: true
+#      tomcat: true
+#      kafka: true
+#      jdbc: true
+#      logback: true
+#      process: true
+#      system: true
 
 
 server:
@@ -90,6 +90,14 @@ spring:
     username: postgres                          # Имя пользователя БД
     password: example                           # Пароль пользователя БД
     driver-class-name: org.postgresql.Driver    # Драйвер PostgreSQL
+#    hikari:
+#      maximum-pool-size: 50      # пул
+#      minimum-idle: 5               # минимум
+#      connection-timeout: 3000      # таймаут
+#      idle-timeout: 300000          # 5 минут
+#      max-lifetime: 600000          # 10 минут
+#      pool-name: BellHikariPool
+#      connection-test-query: SELECT 1
 
   jpa:
     # Настройки JPA и Hibernate
@@ -114,8 +122,8 @@ response:
       getOrder: 1500
 
 logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+#  pattern:
+#    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
   level:
     BellSpring: WARN
 
@@ -123,10 +131,12 @@ decorator:
   datasource:
     datasource-proxy:
       query:
-        enable-logging: true
+        enable-logging: false
       slow-query:
-        enable-logging: true
+        enable-logging: false
         threshold: 100
+      metrics:
+        enabled: true
 
 
 

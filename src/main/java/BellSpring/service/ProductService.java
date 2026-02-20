@@ -1,5 +1,6 @@
 package BellSpring.service;
 
+import io.micrometer.core.annotation.Timed;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,10 +22,14 @@ public class ProductService {
         products.put("Sony WH", 24);
         products.put("Apple Watch", 41);
     }
-
+    @Timed(value = "products.getAll",
+            description = "Time taken to get all products")
     public static Map<String, Integer> getAllProducts() {
         return Collections.unmodifiableMap(products);
     }
+
+    @Timed(value = "products.getPrice",
+            description = "Time taken to get product price")
     public Integer getProductPrice(String productName) {
         return products.get(productName);
     }

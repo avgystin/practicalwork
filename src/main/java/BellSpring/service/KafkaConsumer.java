@@ -3,6 +3,7 @@ package BellSpring.service;
 import BellSpring.model.MessageEntity;
 import BellSpring.repository.MessageRepository;
 import BellSpring.repository.OrderRepository;
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,8 @@ public class KafkaConsumer {
     private final ObservationRegistry observationRegistry;  // + 1 поле
 
     @KafkaListener(topics = "postedmessages", groupId = "my-group")
+    @Timed(value = "kafka.consume.postedmessages",
+            description = "Time to consume and save message from postedmessages topic")
     public void listen(String message) {
 
         Observation.createNotStarted("kafka.receive", observationRegistry)
@@ -38,6 +41,8 @@ public class KafkaConsumer {
     }
 
     @KafkaListener(topics = "practicalwork", groupId = "del-messege")
+    @Timed(value = "kafka.consume.practicalwork",
+            description = "Time to consume and delete order from practicalwork topic")
     public void delmessege(String message) {
 
         Observation.createNotStarted("kafka.receive.delete", observationRegistry)

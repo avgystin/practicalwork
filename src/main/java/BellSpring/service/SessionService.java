@@ -1,6 +1,7 @@
 package BellSpring.service;
 
 import BellSpring.metrics.UserMetrics;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +19,15 @@ public class SessionService {
         this.userMetrics = userMetrics;
     }
 
+    @Timed(value = "session.create",
+            description = "Time taken to create session")
     public void createSession(String sessionId) {
         activeSessions.put(sessionId, System.currentTimeMillis());
         userMetrics.userConnected();
     }
 
+    @Timed(value = "session.validate",
+            description = "Time taken to validate session")
     public boolean isValidSession(String sessionId) {
         if (sessionId == null || !activeSessions.containsKey(sessionId)) {
             return false;
@@ -42,6 +47,8 @@ public class SessionService {
         return true;
     }
 
+    @Timed(value = "session.delete",
+            description = "Time taken to delete session")
     public boolean deleteSession(String sessionId) {
         boolean removed = activeSessions.remove(sessionId) != null;
         if (removed) {
@@ -55,6 +62,8 @@ public class SessionService {
      * Запускается каждую минуту.
      */
     @Scheduled(fixedDelay = 60000)
+    @Timed(value = "session.cleanup",
+            description = "Time taken to cleanup expired sessions")
     @SuppressWarnings("unused") // Метод вызывается Spring-ом автоматически
     public void cleanupExpiredSessions() {
         int beforeSize = activeSessions.size();

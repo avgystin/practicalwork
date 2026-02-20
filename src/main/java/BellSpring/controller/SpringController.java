@@ -5,6 +5,7 @@ import BellSpring.service.KafkaProducer;
 import BellSpring.service.OrderService;
 import BellSpring.service.ProductService;
 import BellSpring.service.SessionService;
+import io.micrometer.core.annotation.Timed;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,8 @@ public class SpringController {
     private final DelayService delayService;
 
     @PostMapping("/post-message")
+    @Timed(value = "api.post.message",
+            description = "Time to post message to Kafka")
     public ResponseEntity<String> calculateSquare(@RequestBody Map<String, String> request,
                                                   HttpServletRequest httpRequest) {
         String msg_id = request.get("msg_id");
@@ -36,6 +39,8 @@ public class SpringController {
     }
 
     @GetMapping("/session/create")
+    @Timed(value = "api.session.create",
+            description = "Time to create session")
     public ResponseEntity<Map<String, String>> createSession() {
         long start = System.currentTimeMillis();  // +1 строка
         String sessionId = UUID.randomUUID().toString();
@@ -47,6 +52,8 @@ public class SpringController {
     }
 
     @GetMapping("/order/getProducts")
+    @Timed(value = "api.order.products",
+            description = "Time to get products")
     public ResponseEntity<?> getProducts(@RequestHeader("Session-ID") String sessionId) {
         long start = System.currentTimeMillis();  // +1 строка
         if (!sessionService.isValidSession(sessionId)) {
@@ -60,6 +67,8 @@ public class SpringController {
     }
 
     @PostMapping("/order/create")
+    @Timed(value = "api.order.create",
+            description = "Time to create order")
     public ResponseEntity<?> createOrder(@RequestHeader("Session-ID") String sessionId,
                                          @RequestBody Map<String, Object> request) {
         long start = System.currentTimeMillis();  // +1 строка
@@ -77,6 +86,8 @@ public class SpringController {
     }
 
     @GetMapping("/order/getOrder")
+    @Timed(value = "api.order.get",
+            description = "Time to get order")
     public ResponseEntity<?> getOrder(@RequestParam Long order_id,
                                       @RequestParam String product_name,
                                       @RequestHeader("Session-ID") String sessionId) {
@@ -108,6 +119,8 @@ public class SpringController {
     }
 
     @DeleteMapping("/session/delete")
+    @Timed(value = "api.session.delete",
+            description = "Time to delete session")
     public ResponseEntity<?> deleteSession(@RequestHeader("Session-ID") String sessionId) {
         long start = System.currentTimeMillis();  // +1 строка
         if (!sessionService.isValidSession(sessionId)) {
@@ -126,6 +139,8 @@ public class SpringController {
     }
 
     @GetMapping("/order/Check")
+    @Timed(value = "api.session.check",
+            description = "Time to check session")
     public ResponseEntity<?> checkSession(@RequestParam String session_id) {
         long start = System.currentTimeMillis();  // +1 строка
         boolean isValid = sessionService.isValidSession(session_id);

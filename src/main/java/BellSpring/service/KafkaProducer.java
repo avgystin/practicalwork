@@ -1,5 +1,6 @@
 package BellSpring.service;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ public class KafkaProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObservationRegistry observationRegistry;
 
+    @Timed(value = "kafka.send",
+            description = "Time taken to send message to Kafka")
     public ResponseEntity<String> sendToKafka(String msg_id, String unixtimestamp,
                                               String method, String path) {
 

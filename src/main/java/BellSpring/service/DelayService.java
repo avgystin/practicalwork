@@ -1,6 +1,7 @@
 package BellSpring.service;
 
 import BellSpring.model.DelayConfig;
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,8 @@ public class DelayService {
     private final DelayConfig delayConfig;
     private final ObservationRegistry observationRegistry;
 
+    @Timed(value = "delay.apply",
+            description = "Time taken to apply dynamic delay")
     public void applyDelay(String endpoint, long elapsedMs) {
         long targetDelay = getDelay(endpoint);
 

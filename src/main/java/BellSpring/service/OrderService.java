@@ -2,6 +2,7 @@ package BellSpring.service;
 
 import BellSpring.model.Order;
 import BellSpring.repository.OrderRepository;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,8 @@ public class OrderService {
     /**
      * Создает заказ для указанного товара
      */
-    @Transactional
+    @Timed(value = "order.create",
+            description = "Time taken to create order")
     public Order createOrder(String sessionId, String productName, Integer quantity) {
         // получаем цену
         Integer unitPrice = productService.getProductPrice(productName);
@@ -40,6 +42,8 @@ public class OrderService {
     /**
      * Получает заказ по ID с валидацией названия продукта
      */
+    @Timed(value = "order.get.validated",
+            description = "Time taken to get and validate order")
     public Order getOrderByIdWithProductValidation(Long orderId, String expectedProductName) {
         Optional<Order> orderOpt = orderRepository.findById(orderId);
 
