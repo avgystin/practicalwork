@@ -34,7 +34,6 @@ public class SpringController {
         String unixtimestamp = String.valueOf(unixtimestampMs / 1000);
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();
-
         return kafkaProducer.sendToKafka(msg_id, unixtimestamp, method, path);
     }
 
