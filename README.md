@@ -128,5 +128,17 @@ curl -X GET "http://localhost:12222/order/Check?session_id=123e4567-e89b-12d3-a4
 | `http://localhost:12222/actuator/prometheus` | Метрики в формате Prometheus |
 | `http://localhost:12222/actuator/metrics/users.concurrent` | Количество активных сессий |
 
+### 📄Swagger
 
-
+**Веб интерфейс**
+```
+http://localhost:12222/swagger-ui/index.html
+```
+**Получить JSON:**
+```
+curl http://localhost:12222/v3/api-docs
+```
+**Сохранить в файл**
+```
+curl http://localhost:12222/v3/api-docs > openapi.json
+```
