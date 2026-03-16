@@ -1,7 +1,7 @@
 package BellSpring.controller;
 
 import BellSpring.model.Order;
-import BellSpring.service.KafkaProducer;
+//import BellSpring.service.KafkaProducer;
 import BellSpring.service.OrderService;
 import BellSpring.service.ProductService;
 import BellSpring.service.SessionService;
@@ -19,23 +19,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SpringController {
 
-    private final KafkaProducer kafkaProducer;
+//    private final KafkaProducer kafkaProducer;
     private final SessionService sessionService;
     private final OrderService orderService;
     private final DelayService delayService;
 
-    @PostMapping("/post-message")
-    @Timed(value = "api.post.message",
-            description = "Time to post message to Kafka")
-    public ResponseEntity<String> calculateSquare(@RequestBody Map<String, String> request,
-                                                  HttpServletRequest httpRequest) {
-        String msg_id = request.get("msg_id");
-        long unixtimestampMs = System.currentTimeMillis();
-        String unixtimestamp = String.valueOf(unixtimestampMs / 1000);
-        String method = httpRequest.getMethod();
-        String path = httpRequest.getRequestURI();
-        return kafkaProducer.sendToKafka(msg_id, unixtimestamp, method, path);
-    }
 
     @GetMapping("/session/create")
     @Timed(value = "api.session.create",
