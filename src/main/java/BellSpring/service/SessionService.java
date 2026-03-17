@@ -2,6 +2,7 @@ package BellSpring.service;
 
 import BellSpring.metrics.UserMetrics;
 import io.micrometer.core.annotation.Timed;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +14,14 @@ public class SessionService {
 
     private final UserMetrics userMetrics;
     private final Map<String, Long> activeSessions = new ConcurrentHashMap<>();
-    private static final long SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 минут
+    private final long sessionTimeoutMs;
 
-    public SessionService(UserMetrics userMetrics) {
+    public SessionService(
+            UserMetrics userMetrics,
+            @Value("${session.timeout.minutes:30}") int sessionTimeoutMinutes) { // ДОБАВИТЬ: параметр с значением по умолчанию
         this.userMetrics = userMetrics;
+        // ДОБАВИТЬ: конвертация минут в миллисекунды
+        this.sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000L;
     }
 
     @Timed(value = "session.create",
@@ -39,7 +44,7 @@ public class SessionService {
         }
 
         // Проверяем не истекла ли сессия
-        if (System.currentTimeMillis() - creationTime > SESSION_TIMEOUT_MS) {
+        if (System.currentTimeMillis() - creationTime > sessionTimeoutMs) {
             activeSessions.remove(sessionId);
             userMetrics.userDisconnected();
             return false;
@@ -70,7 +75,7 @@ public class SessionService {
         long now = System.currentTimeMillis();
 
         activeSessions.entrySet().removeIf(entry -> {
-            boolean expired = now - entry.getValue() > SESSION_TIMEOUT_MS;
+            boolean expired = now - entry.getValue() > sessionTimeoutMs;
             if (expired) {
                 userMetrics.userDisconnected();
             }

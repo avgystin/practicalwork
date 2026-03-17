@@ -2,12 +2,13 @@ package BellSpring.controller;
 
 import BellSpring.model.DelayConfig;
 import BellSpring.service.DelayService;
-import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,24 +19,24 @@ public class DelayController {
     private final DelayService delayService;
 
     @GetMapping
-    @Timed(value = "delay.get.config",
-            description = "Time taken to get delay configuration")
     public DelayConfig getDelays() {
         return delayService.getConfig();
     }
 
     @PostMapping
-    @Timed(value = "delay.update.config",
-            description = "Time taken to update delay configuration")
-    public ResponseEntity<String> updateDelays(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> updateDelays(@RequestBody Map<String, Object> request) {
         DelayConfig currentConfig = delayService.getConfig();
-        updateFields(currentConfig, request);
+        List<String> errors = new ArrayList<>();
+
+        updateFields(currentConfig, request, errors);
+
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid fields: " + String.join(", ", errors)));
+        }
         return ResponseEntity.ok("Configuration updated temporarily!");
     }
 
-    private void updateFields(Object target, Map<String, Object> source) {
-        if (target == null || source == null) return;
-
+    private void updateFields(Object target, Map<String, Object> source, List<String> errors) {
         for (String key : source.keySet()) {
             try {
                 Field field = target.getClass().getDeclaredField(key);
@@ -43,17 +44,12 @@ public class DelayController {
                 Object value = source.get(key);
 
                 if (value instanceof Map) {
-                    Object nestedTarget = field.get(target);
-                    if (nestedTarget != null) {
-                        updateFields(nestedTarget, (Map<String, Object>) value);
-                    }
-                } else {
-                    if (value instanceof Number) {
-                        field.set(target, ((Number) value).longValue());
-                    }
+                    updateFields(field.get(target), (Map<String, Object>) value, errors);
+                } else if (value instanceof Number) {
+                    field.set(target, ((Number) value).longValue());
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                // игнорируем
+                errors.add(key);
             }
         }
     }

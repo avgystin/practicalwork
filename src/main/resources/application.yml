@@ -138,5 +138,7 @@ decorator:
       metrics:
         enabled: true
 
-
+session:
+  timeout:
+    minutes: 1  # время жизни сессии в минутах
 
